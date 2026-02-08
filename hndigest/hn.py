@@ -1,14 +1,12 @@
 """Hacker News API: fetch and select stories."""
 
-from __future__ import annotations
-
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import httpx
 
-from hn_digest.config import HN_API, JOB_WORDS, log
+from hndigest.config import HN_API, JOB_WORDS, log
 
 
 def _parse_hits(hits: list[dict]) -> list[dict]:

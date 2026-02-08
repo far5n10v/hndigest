@@ -1,7 +1,5 @@
 """Configuration: channels, categories, and constants."""
 
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -67,6 +65,7 @@ GEMINI_API = (
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 )
 TELEGRAM_API = "https://api.telegram.org/bot{}/sendMessage"
+TELEGRAM_EDIT_API = "https://api.telegram.org/bot{}/editMessageText"
 
 JOB_WORDS = ["hiring", "who is hiring", "who wants to be hired", "freelancer", "job", "career"]
 
@@ -74,17 +73,16 @@ JOB_WORDS = ["hiring", "who is hiring", "who wants to be hired", "freelancer", "
 CATEGORY_NAMES: dict[str, dict[str, str]] = {
     "top": {"uz": "Eng yaxshilar", "ru": "Лучшее", "en": "Top"},
     "ai": {"uz": "AI", "ru": "AI", "en": "AI"},
-    "code": {"uz": "Kod", "ru": "Код", "en": "Code"},
+    "dev": {"uz": "Dev", "ru": "Код", "en": "Dev"},
+    "ops": {"uz": "Ops", "ru": "Ops", "en": "Ops"},
     "data": {"uz": "Ma'lumotlar", "ru": "Данные", "en": "Data"},
     "science": {"uz": "Fan", "ru": "Наука", "en": "Science"},
     "security": {"uz": "Xavfsizlik", "ru": "Безопасность", "en": "Security"},
-    "design": {"uz": "Dizayn", "ru": "Дизайн", "en": "Design"},
-    "business": {"uz": "Biznes", "ru": "Бизнес", "en": "Business"},
-    "work": {"uz": "Ish", "ru": "Работа", "en": "Work"},
-    "learn": {"uz": "O'rganish", "ru": "Обучение", "en": "Learn"},
+    "tech": {"uz": "Texnologiya", "ru": "Индустрия", "en": "Tech"},
+    "career": {"uz": "Karyera", "ru": "Карьера", "en": "Career"},
+    "culture": {"uz": "Madaniyat", "ru": "Культура", "en": "Culture"},
     "show_hn": {"uz": "Show HN", "ru": "Show HN", "en": "Show HN"},
     "ask_hn": {"uz": "Ask HN", "ru": "Ask HN", "en": "Ask HN"},
-    "other": {"uz": "Boshqalar", "ru": "Другое", "en": "Other"},
 }
 
 # Localized labels
@@ -129,7 +127,7 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
         ],
         "domains": ["openai.com", "anthropic.com", "deepmind.com", "huggingface.co"],
     },
-    "code": {
+    "dev": {
         "keywords": [
             "rust",
             "python",
@@ -139,14 +137,11 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
             "compiler",
             "programming",
             "git",
-            "linux",
-            "kernel",
-            "api",
             "open source",
-            "docker",
-            "kubernetes",
-            "devops",
-            "nginx",
+            "api",
+            "webassembly",
+            "wasm",
+            "software architecture",
             "vim",
             "emacs",
             "neovim",
@@ -155,21 +150,44 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
         ],
         "domains": ["github.com", "gitlab.com", "dev.to", "sourceware.org"],
     },
-    "data": {
+    "ops": {
         "keywords": [
+            "linux",
+            "kernel",
+            "docker",
+            "kubernetes",
+            "devops",
+            "nginx",
+            "serverless",
+            "sysadmin",
+            "raspberry pi",
+            "fpga",
+            "hardware",
             "database",
             "sql",
             "postgres",
             "redis",
-            "data",
-            "analytics",
-            "bigquery",
-            "elasticsearch",
             "mongodb",
             "sqlite",
             "cassandra",
+            "elasticsearch",
         ],
         "domains": ["postgresql.org"],
+    },
+    "data": {
+        "keywords": [
+            "data engineering",
+            "analytics",
+            "bigquery",
+            "data science",
+            "visualization",
+            "spreadsheet",
+            "big data",
+            "pandas",
+            "dbt",
+            "data pipeline",
+        ],
+        "domains": [],
     },
     "science": {
         "keywords": [
@@ -180,18 +198,24 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
             "biology",
             "chemistry",
             "math",
+            "mathematics",
             "space",
+            "spacex",
             "nasa",
             "telescope",
             "quantum",
             "genome",
             "climate",
+            "climate change",
             "neuroscience",
             "arxiv",
             "peer review",
             "experiment",
+            "solar",
+            "nuclear",
+            "energy",
         ],
-        "domains": ["arxiv.org", "nature.com", "science.org", "nasa.gov"],
+        "domains": ["arxiv.org", "nature.com", "science.org", "nasa.gov", "spacex.com"],
     },
     "security": {
         "keywords": [
@@ -212,23 +236,7 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
         ],
         "domains": ["krebsonsecurity.com", "schneier.com"],
     },
-    "design": {
-        "keywords": [
-            "typography",
-            "typeface",
-            "font",
-            "ui design",
-            "ux design",
-            "css",
-            "animation",
-            "svg",
-            "color palette",
-            "figma",
-            "accessibility",
-        ],
-        "domains": ["figma.com", "dribbble.com"],
-    },
-    "business": {
+    "tech": {
         "keywords": [
             "startup",
             "founder",
@@ -260,7 +268,7 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
         ],
         "domains": ["techcrunch.com", "ycombinator.com", "theregister.com"],
     },
-    "work": {
+    "career": {
         "keywords": [
             "remote work",
             "career",
@@ -275,18 +283,28 @@ CATEGORIES: dict[str, dict[str, list[str]]] = {
         ],
         "domains": [],
     },
-    "learn": {
+    "culture": {
         "keywords": [
-            "tutorial",
-            "guide",
-            "how to",
-            "learn",
-            "course",
-            "introduction to",
-            "beginner",
-            "walkthrough",
+            "history",
+            "urbanism",
+            "philosophy",
+            "gaming",
+            "typography",
+            "typeface",
+            "font",
+            "ui design",
+            "ux design",
+            "css",
+            "svg",
+            "figma",
+            "accessibility",
+            "copyright",
+            "digital rights",
+            "culture",
+            "animation",
+            "color palette",
         ],
-        "domains": ["freecodecamp.org", "coursera.org"],
+        "domains": ["figma.com", "dribbble.com"],
     },
     "show_hn": {
         "keywords": ["show hn"],
@@ -325,8 +343,8 @@ def categorize_story(story: dict) -> str:
             if d in domain:
                 return cat_key
 
-    return "other"
+    return "culture"
 
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
-log = logging.getLogger("hn_digest")
+log = logging.getLogger("hndigest")

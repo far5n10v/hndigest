@@ -1,5 +1,5 @@
 """HN Digest — Weekly Hacker News Digest for Telegram."""
 
-from hn_digest.cli import main
+from hndigest.cli import main
 
 __all__ = ["main"]

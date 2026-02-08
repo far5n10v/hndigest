@@ -1,24 +1,22 @@
 """CLI entry point: argument parsing and digest generation."""
 
-from __future__ import annotations
-
 import argparse
 import os
 from pathlib import Path
 
 import httpx
 
-from hn_digest.config import CHANNELS, Channel, categorize_story, log
-from hn_digest.content import fetch_articles
-from hn_digest.formatter import format_digest
-from hn_digest.hn import fetch_stories, select_stories
-from hn_digest.http import get_client
-from hn_digest.process import process_stories
-from hn_digest.telegram import post_thread
+from hndigest.config import CHANNELS, Channel, categorize_story, log
+from hndigest.content import fetch_articles
+from hndigest.formatter import format_digest, update_main_with_links
+from hndigest.hn import fetch_stories, select_stories
+from hndigest.http import get_client
+from hndigest.process import process_stories
+from hndigest.telegram import post_thread
 
 
-def generate_digest(channel: Channel, session: httpx.Client) -> list[str]:
-    """Generate digest for a channel. Returns list of messages."""
+def generate_digest(channel: Channel, session: httpx.Client) -> tuple[list[str], list[str]]:
+    """Generate digest for a channel. Returns (messages, reply_categories)."""
     log.info(f"Generating {channel.telegram}...")
 
     stories = fetch_stories(session, channel.days, channel.min_points)
@@ -102,14 +100,27 @@ def main() -> int:
     channels = list(CHANNELS.values()) if args.all else [CHANNELS[args.channel]]
 
     for channel in channels:
-        messages = generate_digest(channel, session)
+        messages, reply_categories = generate_digest(channel, session)
 
         if args.post:
             token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
             if not token:
                 log.error("TELEGRAM_BOT_TOKEN not set")
                 return 1
-            post_thread(token, channel.telegram, messages)
+            username = channel.telegram.lstrip("@")
+
+            def make_edit_callback(usr: str, lang: str):
+                def callback(main_text, cats, msg_ids):
+                    return update_main_with_links(main_text, cats, msg_ids, usr, lang)
+                return callback
+
+            post_thread(
+                token,
+                channel.telegram,
+                messages,
+                reply_categories=reply_categories,
+                edit_main_callback=make_edit_callback(username, channel.language),
+            )
         elif args.out:
             Path(args.out).write_text("\n\n---\n\n".join(messages), encoding="utf-8")
             log.info(f"Saved to {args.out}")

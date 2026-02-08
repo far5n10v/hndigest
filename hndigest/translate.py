@@ -1,13 +1,11 @@
 """Gemini-based title translation with file caching."""
 
-from __future__ import annotations
-
 import hashlib
 import time
 
 import httpx
 
-from hn_digest.config import CACHE_DIR, GEMINI_API, log
+from hndigest.config import CACHE_DIR, GEMINI_API, log
 
 
 def translate_batch(

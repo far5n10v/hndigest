@@ -5,12 +5,12 @@ Multi-language weekly Hacker News digest for Telegram channels.
 ## Quick Reference
 
 ```bash
-uv run python -m hn_digest --channel hn_uz   # Generate Uzbek digest
-uv run python -m hn_digest --channel hn_ru   # Generate Russian digest
-uv run python -m hn_digest --channel hn_en   # Generate English digest
-uv run python -m hn_digest --list            # List all channels
-uv run python -m hn_digest --post            # Post to Telegram
-uv run python -m hn_digest --out digest.html # Save to file
+uv run python -m hndigest --channel hn_uz   # Generate Uzbek digest
+uv run python -m hndigest --channel hn_ru   # Generate Russian digest
+uv run python -m hndigest --channel hn_en   # Generate English digest
+uv run python -m hndigest --list            # List all channels
+uv run python -m hndigest --post            # Post to Telegram
+uv run python -m hndigest --out digest.html # Save to file
 ```
 
 ## Environment Variables
@@ -64,15 +64,15 @@ Defined in `config.py` as `Channel` dataclasses. Each channel specifies:
 
 Telegram HTML with thread structure:
 1. Main post: header + top 10 stories
-2. Category replies: ai, code, data, science, security, design, business, work, learn, show_hn, ask_hn, other
+2. Category replies: ai, dev, ops, data, science, security, tech, career, culture, show_hn, ask_hn
 
 ## Code Conventions
 
 - Python 3.11+, type hints throughout
 - `from __future__ import annotations` in every module
 - httpx for all HTTP (sync client, no async)
-- Linter: `uv run ruff check hn_digest/` (line-length 100, E/F/I/W rules)
-- No test framework yet — verify manually with `uv run python -m hn_digest`
+- Linter: `uv run ruff check hndigest/` (line-length 100, E/F/I/W rules)
+- No test framework yet — verify manually with `uv run python -m hndigest`
 - Single `log` logger from `config.py` — use `log.info()` / `log.warning()`
 - All text files end with a newline
 

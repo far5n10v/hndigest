@@ -1,20 +1,18 @@
 """Unified Gemini processing: categorize, rank, translate, and summarize in one call."""
 
-from __future__ import annotations
-
 import hashlib
 import time
 from dataclasses import dataclass
 
 import httpx
 
-from hn_digest.categorize import VALID_CATEGORIES, _extract_field
-from hn_digest.config import CACHE_DIR, GEMINI_API, Channel, log
+from hndigest.categorize import VALID_CATEGORIES, _extract_field
+from hndigest.config import CACHE_DIR, GEMINI_API, Channel, log
 
 PROCESS_PROMPT = """You are a Hacker News editor curating a weekly digest.
 
 For each story below, do ALL of the following:
-1. Categorize into ONE category: ai, code, data, science, security, design, business, work, learn, other
+1. Categorize into ONE category: ai, dev, ops, data, science, security, tech, career, culture
    (Do NOT assign show_hn or ask_hn — those are detected separately)
 2. Mark the 10 most interesting stories as "top" rank (others are "regular"):
    - Genuinely novel, important, or thought-provoking
@@ -25,22 +23,21 @@ For each story below, do ALL of the following:
 
 Category guide:
 - ai: AI/ML, LLMs, autonomous vehicles, neural networks, robotics
-- code: Programming languages, compilers, Git, Linux, open source, APIs, Docker, CLI tools
-- data: Databases, SQL, Postgres, Redis, data engineering, analytics, data science
-- science: Research, physics, biology, space, NASA, quantum, climate, arxiv
+- dev: Programming languages, compilers, algorithms, software architecture, WebAssembly
+- ops: Linux, Docker, Kubernetes, databases, serverless, sysadmin, hardware
+- data: Data engineering, analytics, visualization, spreadsheets, big data
+- science: Physics, space, biology, climate, mathematics, energy
 - security: Vulnerabilities, breaches, malware, privacy, encryption, CVEs
-- design: UI/UX, typography, CSS, SVG, accessibility, Figma
-- business: Startups, funding, acquisitions, regulations, legal, antitrust, policy
-- work: Career, remote work, management, hiring, interviews, workplace culture
-- learn: Tutorials, guides, educational content, talks, "how I built", courses
-- other: Everything else
+- tech: Startups, VC, antitrust, Big Tech, regulations, policy
+- career: Remote work, hiring, burnout, productivity, salaries
+- culture: History, urbanism, philosophy, gaming, typography, design, copyright, digital rights
 
 Stories:
 {stories}
 
 Return EXACTLY one line per story in this format:
 1. category=ai, rank=top, title=Translated title here, summary=One sentence summary here
-2. category=code, rank=regular, title=Another title, summary=Another summary
+2. category=dev, rank=regular, title=Another title, summary=Another summary
 
 IMPORTANT: Return one line for EVERY story. Do not skip any."""
 
@@ -147,7 +144,7 @@ def _parse_result_line(line: str) -> tuple[int, StoryResult] | None:
     summary = _extract_field(rest, "summary")
 
     if cat not in VALID_CATEGORIES:
-        cat = "other"
+        cat = "culture"
 
     return num, StoryResult(
         category=cat,

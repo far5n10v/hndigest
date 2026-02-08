@@ -1,14 +1,12 @@
 """Article content fetching with trafilatura extraction and file caching."""
 
-from __future__ import annotations
-
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
 import trafilatura
 
-from hn_digest.config import CONTENT_CACHE_DIR, log
+from hndigest.config import CONTENT_CACHE_DIR, log
 
 MAX_WORDS = 3000
 FETCH_TIMEOUT = 15

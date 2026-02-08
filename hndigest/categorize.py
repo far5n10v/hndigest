@@ -1,18 +1,16 @@
 """Gemini-based story categorization and ranking with file caching."""
 
-from __future__ import annotations
-
 import hashlib
 import time
 
 import httpx
 
-from hn_digest.config import CACHE_DIR, GEMINI_API, log
+from hndigest.config import CACHE_DIR, GEMINI_API, log
 
 CATEGORIZE_PROMPT = """You are a Hacker News editor curating a weekly digest.
 
 1. Categorize each story into ONE category:
-   ai, code, data, science, security, design, business, work, learn, other
+   ai, dev, ops, data, science, security, tech, career, culture
    (Do NOT assign show_hn or ask_hn — those are detected separately)
 
 2. Mark the 10 most interesting stories as "top":
@@ -22,35 +20,33 @@ CATEGORIZE_PROMPT = """You are a Hacker News editor curating a weekly digest.
 
 Category guide:
 - ai: AI/ML, LLMs, autonomous vehicles, neural networks, robotics
-- code: Programming languages, compilers, Git, Linux, open source, APIs, Docker, CLI tools
-- data: Databases, SQL, Postgres, Redis, data engineering, analytics, data science
-- science: Research, physics, biology, space, NASA, quantum, climate, arxiv
+- dev: Programming languages, compilers, algorithms, software architecture, WebAssembly
+- ops: Linux, Docker, Kubernetes, databases, serverless, sysadmin, hardware
+- data: Data engineering, analytics, visualization, spreadsheets, big data
+- science: Physics, space, biology, climate, mathematics, energy
 - security: Vulnerabilities, breaches, malware, privacy, encryption, CVEs
-- design: UI/UX, typography, CSS, SVG, accessibility, Figma
-- business: Startups, funding, acquisitions, regulations, legal, antitrust, policy
-- work: Career, remote work, management, hiring, interviews, workplace culture
-- learn: Tutorials, guides, educational content, talks, "how I built", courses
-- other: Everything else
+- tech: Startups, VC, antitrust, Big Tech, regulations, policy
+- career: Remote work, hiring, burnout, productivity, salaries
+- culture: History, urbanism, philosophy, gaming, typography, design, copyright, digital rights
 
 Stories:
 {stories}
 
 Return EXACTLY one line per story:
 1. category=ai, rank=top
-2. category=code, rank=regular
+2. category=dev, rank=regular
 ..."""
 
 VALID_CATEGORIES = {
     "ai",
-    "code",
+    "dev",
+    "ops",
     "data",
     "science",
     "security",
-    "design",
-    "business",
-    "work",
-    "learn",
-    "other",
+    "tech",
+    "career",
+    "culture",
 }
 
 
@@ -129,7 +125,7 @@ def categorize_and_rank_batch(
                 rank = _extract_field(rest, "rank")
 
                 if cat not in VALID_CATEGORIES:
-                    cat = "other"
+                    cat = "culture"
                 is_top = rank == "top"
 
                 s = uncached[num]

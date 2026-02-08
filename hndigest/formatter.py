@@ -1,10 +1,8 @@
 """Telegram HTML formatting for digests."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta, timezone
 
-from hn_digest.config import (
+from hndigest.config import (
     HN_ITEM,
     LABELS,
     MONTHS,
@@ -30,11 +28,12 @@ def format_digest(
     stories: list[dict],
     titles: dict[int, str],
     summaries: dict[int, str] | None = None,
-) -> list[str]:
-    """Format digest as list of Telegram HTML messages.
+) -> tuple[list[str], list[str]]:
+    """Format digest as Telegram HTML messages with category metadata.
 
-    Returns a list where the first element is the main post (header + top 5)
-    and each subsequent element is a category reply.
+    Returns (messages, reply_categories) where messages[0] is the main post,
+    messages[1:] are category replies, and reply_categories[i] is the category
+    key for messages[i+1].
     """
     now = datetime.now(timezone.utc)
     start = now - timedelta(days=channel.days)
@@ -75,27 +74,34 @@ def format_digest(
 
     tag = f"#digest_{issue}"
 
+    # --- Category replies (5 per category) ---
+    category_order = [
+        "ai",
+        "dev",
+        "ops",
+        "data",
+        "science",
+        "security",
+        "tech",
+        "career",
+        "culture",
+        "show_hn",
+        "ask_hn",
+    ]
+
+    # Build category teaser line for main post
+    active_cats = [k for k in category_order if k in by_category]
+    if active_cats:
+        cat_labels = " \u00b7 ".join(category_name(k, lang) for k in active_cats)
+        main_lines.append("")
+        main_lines.append(f"\u2193 {cat_labels}")
+
     main_lines.append("")
     main_lines.append(channel.footer)
     main_lines.append(tag)
 
     messages = ["\n".join(main_lines)]
-
-    # --- Category replies (5 per category) ---
-    category_order = [
-        "ai",
-        "code",
-        "data",
-        "science",
-        "security",
-        "design",
-        "business",
-        "work",
-        "learn",
-        "show_hn",
-        "ask_hn",
-        "other",
-    ]
+    reply_categories: list[str] = []
 
     for cat_key in category_order:
         cat_stories = by_category.get(cat_key, [])
@@ -108,8 +114,41 @@ def format_digest(
         lines.append("")
         lines.append(tag)
         messages.append("\n".join(lines))
+        reply_categories.append(cat_key)
 
-    return messages
+    return messages, reply_categories
+
+
+def update_main_with_links(
+    main_text: str,
+    reply_categories: list[str],
+    message_ids: list[int],
+    channel_username: str,
+    lang: str,
+) -> str:
+    """Replace the category teaser line in main post with linked category names.
+
+    channel_username should be without @ (e.g. "HNDigestEn").
+    """
+    links = []
+    for cat_key, msg_id in zip(reply_categories, message_ids):
+        name = category_name(cat_key, lang)
+        url = f"https://t.me/{channel_username}/{msg_id}"
+        links.append(f'<a href="{url}">{name}</a>')
+
+    if not links:
+        return main_text
+
+    linked_line = "\u2193 " + " \u00b7 ".join(links)
+
+    # Replace the plain teaser line (starts with ↓)
+    lines = main_text.split("\n")
+    for i, line in enumerate(lines):
+        if line.startswith("\u2193 "):
+            lines[i] = linked_line
+            break
+
+    return "\n".join(lines)
 
 
 def format_story_lines(
